@@ -1,13 +1,13 @@
 package com.conferencePlaza.plaza.admin;
 
-public class PostConferenceResponse {
+public class PostItemResponse {
 
     public String message;
 
-    public PostConferenceResponse() {
+    public PostItemResponse() {
     }
 
-    public PostConferenceResponse(String message) {
+    public PostItemResponse(String message) {
         this.message = message;
     }
 
