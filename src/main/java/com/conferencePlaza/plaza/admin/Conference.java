@@ -19,7 +19,7 @@ public class Conference {
             strategy = GenerationType.SEQUENCE,
             generator = "conference_sequence"
     )
-    private long id;
+    public long id;
     public String name;
     public String city;
     public String state;
@@ -103,4 +103,11 @@ public class Conference {
         this.submissionDeadline = submissionDeadline;
     }
 
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
 }

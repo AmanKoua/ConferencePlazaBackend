@@ -34,7 +34,7 @@ public class InitConfiguration {
         );
           User chair1 = new User(
                   "chair1@gmail.com",
-                  "chair",
+                  "chair1",
                   passwordEncoder.encode("password"),
                   "John",
                   "Smith",
@@ -44,7 +44,7 @@ public class InitConfiguration {
           );
           User chair2 = new User(
                   "chair2@gmail.com",
-                  "chair",
+                  "chair2",
                   passwordEncoder.encode("password"),
                   "Bill",
                   "Jones",
@@ -54,7 +54,7 @@ public class InitConfiguration {
           );
           User author1 = new User(
                   "author1@gmail.com",
-                  "author",
+                  "author1",
                   passwordEncoder.encode("password"),
                   "Amy",
                   "Miller",
@@ -64,7 +64,7 @@ public class InitConfiguration {
           );
           User reviewer1 = new User(
                   "reviewer1@gmail.com",
-                  "reviewer",
+                  "reviewer1",
                   passwordEncoder.encode("password"),
                   "Steven",
                   "lornenz",
@@ -74,7 +74,7 @@ public class InitConfiguration {
           );
           User reviewer2 = new User(
                   "reviewer2@gmail.com",
-                  "reviewer",
+                  "reviewer2",
                   passwordEncoder.encode("password"),
                   "billy",
                   "shacklebolt",
@@ -84,7 +84,7 @@ public class InitConfiguration {
           );
           User reviewer3 = new User(
                   "reviewer3@gmail.com",
-                  "reviewer",
+                  "reviewer3",
                   passwordEncoder.encode("password"),
                   "susan",
                   "leRoja",
