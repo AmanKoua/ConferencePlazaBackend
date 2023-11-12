@@ -13,7 +13,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Methods will be automatically be implemented because it's extending JpaRepository
     // Only certain custom methods and queries need to be implemented
 
-    @Query("SELECT * FROM User WHERE User.email = :email")
+    @Query("SELECT u FROM User u WHERE u.email = :email")
     Optional<User> findUserByEmail(@Param("email") String email);
 
 //    @Query("SELECT s FROM Student s WHERE s.email = :email")
