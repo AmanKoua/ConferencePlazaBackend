@@ -34,10 +34,12 @@ public class Conference {
 
     public Date submissionDeadline;
 
+    public Long chairId;
+
     public Conference() {
     }
 
-    public Conference(String name, String city, String state, String country, Date startDate, Date endDate, Date submissionDeadline) {
+    public Conference(String name, String city, String state, String country, Date startDate, Date endDate, Date submissionDeadline, Long chairId) {
         this.name = name;
         this.city = city;
         this.state = state;
@@ -45,6 +47,7 @@ public class Conference {
         this.startDate = startDate;
         this.endDate = endDate;
         this.submissionDeadline = submissionDeadline;
+        this.chairId = chairId;
     }
 
     public String getName() {
@@ -109,5 +112,13 @@ public class Conference {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public Long getChairId() {
+        return chairId;
+    }
+
+    public void setChairId(Long chairId) {
+        this.chairId = chairId;
     }
 }

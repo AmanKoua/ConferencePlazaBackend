@@ -3,7 +3,6 @@ package com.conferencePlaza.plaza.user;
 import com.conferencePlaza.plaza.admin.Conference;
 import com.conferencePlaza.plaza.admin.ConferenceRepository;
 import com.conferencePlaza.plaza.admin.PostItemResponse;
-import com.conferencePlaza.plaza.auth.LoginRequestResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -64,10 +63,10 @@ public class UserController {
         return null;
     }
 
-    // Get a single conference by id as an author
+    // Get a single conference's data by id as an author
     @GetMapping
     @RequestMapping("/conference")
-    public ResponseEntity<List<GetConferenceResponse>> getConference(@RequestParam Optional<String> conferenceId){
+    public ResponseEntity<List<GetConferenceResponse>> getConferenceData(@RequestParam Optional<String> conferenceId){
 
         if(conferenceId.isEmpty()){
             System.out.println("----- empty conference id param! -------");
@@ -92,7 +91,7 @@ public class UserController {
                 return null;
             }
 
-            List<Paper> userPapers = paperRepository.getPapersByConferenceId(tempConference.get().getId(), tempUser.get().getId());
+            List<Paper> userPapers = paperRepository.getPapersByConferenceIdAndAuthorId(tempConference.get().getId(), tempUser.get().getId());
 
             if(userPapers.size() == 0){
                 System.out.println("------ no papers submitted to conference ----");
@@ -176,6 +175,70 @@ public class UserController {
 
         }
         return null;
+    }
+
+    @GetMapping
+    @RequestMapping("/chair/conference")
+    public ResponseEntity<List<GetConferenceResponse>> getAllSubmissionsToConference(){
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if(authentication != null && authentication.isAuthenticated()){
+            String username = authentication.getName(); // user email extracted here
+            Optional<User> tempUser = userRepository.findUserByEmail(username);
+
+            if(!tempUser.isPresent()){
+                System.out.println("------ User not found when retrieving conference submissions! ----");
+                return null;
+            }
+
+            Optional<Conference> tempConference = conferenceRepository.getConferenceByChairId(tempUser.get().getId());
+
+            if(tempConference.isEmpty()){
+                System.out.println("------ no conference found when retrieving chair conference! ----");
+                return null;
+            }
+
+            List<Paper> conferencePapers = paperRepository.getPapersByConferenceId(tempConference.get().getId());
+
+            if(conferencePapers.isEmpty()){
+                System.out.println("------ no papers submitted to conference ----");
+                return ResponseEntity.ok(new ArrayList<>());
+            }
+
+            List<GetConferenceResponse> responsePayload = new ArrayList<>();
+
+            for(int i = 0; i < conferencePapers.size(); i++){
+
+                List<PaperCoAuthors> tempPaperCoAuthors = paperCoAuthorsRepository.findCoAuthorsForSubmission(conferencePapers.get(i).getId());
+                List<String> tempPaperCoAuthorsNames = new ArrayList<>();
+
+                Optional<User> tempAuthor = userRepository.findById(conferencePapers.get(i).getAuthorId());
+
+                if(tempAuthor.isEmpty()){
+                    System.out.println("Author of conference submission does not exist!");
+                    continue;
+                }
+
+                String authorName = tempAuthor.get().getFirstName() + " " + tempAuthor.get().getLastName();
+
+                for(int j = 0; j < tempPaperCoAuthors.size(); j++){
+                    Optional<User> tempCoAuthor = userRepository.findById(tempPaperCoAuthors.get(j).getUserId());
+
+                    if(tempCoAuthor.isEmpty()){
+                        continue;
+                    }
+
+                    tempPaperCoAuthorsNames.add(tempCoAuthor.get().getFirstName() + " " + tempCoAuthor.get().getLastName());
+                }
+
+                GetConferenceResponse temp = new GetConferenceResponse(conferencePapers.get(i).getPaperTitle(), authorName, tempPaperCoAuthorsNames, conferencePapers.get(i).getStatus());
+                responsePayload.add(temp);
+            }
+            return ResponseEntity.ok(responsePayload);
+        }
+        return null;
+
     }
 
 }
