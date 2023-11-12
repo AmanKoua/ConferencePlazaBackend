@@ -3,7 +3,7 @@ package com.conferencePlaza.plaza.user;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name="user")
+@Table(name="plazaUser")
 public class User {
 
     @Id
