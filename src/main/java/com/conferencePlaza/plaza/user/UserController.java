@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,6 +60,67 @@ public class UserController {
             GetConferencesResponse tempResponse = new GetConferencesResponse(tempConferences);
             return ResponseEntity.ok(tempResponse);
 
+        }
+        return null;
+    }
+
+    // Get a single conference by id as an author
+    @GetMapping
+    @RequestMapping("/conference")
+    public ResponseEntity<List<GetConferenceResponse>> getConference(@RequestParam Optional<String> conferenceId){
+
+        if(conferenceId.isEmpty()){
+            System.out.println("----- empty conference id param! -------");
+            return null;
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if(authentication != null && authentication.isAuthenticated()){
+            String username = authentication.getName(); // user email extracted here
+            Optional<User> tempUser = userRepository.findUserByEmail(username);
+
+            if(!tempUser.isPresent()){
+                System.out.println("------ User not found when retrieving conference! ----");
+                return null;
+            }
+
+            Optional<Conference> tempConference = conferenceRepository.findById(Long.parseLong(conferenceId.get()));
+
+            if(tempConference.isEmpty()){
+                System.out.println("------ conference not found when retrieving conference! ----");
+                return null;
+            }
+
+            List<Paper> userPapers = paperRepository.getPapersByConferenceId(tempConference.get().getId(), tempUser.get().getId());
+
+            if(userPapers.size() == 0){
+                System.out.println("------ no papers submitted to conference ----");
+                return ResponseEntity.ok(new ArrayList<>());
+            }
+
+            String authorName = tempUser.get().getFirstName() + " " + tempUser.get().getLastName();
+            List<GetConferenceResponse> responsePayload = new ArrayList<>();
+
+            for(int i = 0; i < userPapers.size(); i++){
+
+                List<PaperCoAuthors> tempPaperCoAuthors = paperCoAuthorsRepository.findCoAuthorsForSubmission(userPapers.get(i).getId());
+                List<String> tempPaperCoAuthorsNames = new ArrayList<>();
+
+                for(int j = 0; j < tempPaperCoAuthors.size(); j++){
+                    Optional<User> tempCoAuthor = userRepository.findById(tempPaperCoAuthors.get(j).getUserId());
+
+                    if(tempCoAuthor.isEmpty()){
+                        continue;
+                    }
+
+                    tempPaperCoAuthorsNames.add(tempCoAuthor.get().getFirstName() + " " + tempCoAuthor.get().getLastName());
+                }
+
+                GetConferenceResponse temp = new GetConferenceResponse(userPapers.get(i).getPaperTitle(), authorName, tempPaperCoAuthorsNames, userPapers.get(i).getStatus());
+                responsePayload.add(temp);
+            }
+            return ResponseEntity.ok(responsePayload);
         }
         return null;
     }
