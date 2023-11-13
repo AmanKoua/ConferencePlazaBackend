@@ -3,7 +3,9 @@ package com.conferencePlaza.plaza.user;
 import com.conferencePlaza.plaza.admin.Conference;
 import com.conferencePlaza.plaza.admin.ConferenceRepository;
 import com.conferencePlaza.plaza.admin.PostItemResponse;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -20,12 +22,14 @@ public class UserController {
     private final ConferenceRepository conferenceRepository;
     private final PaperRepository paperRepository;
     private final PaperCoAuthorsRepository paperCoAuthorsRepository;
+    private final ReviewerAssignmentRepository reviewerAssignmentRepository;
 
-    UserController(UserRepository u, ConferenceRepository c, PaperRepository p, PaperCoAuthorsRepository p1){
+    UserController(UserRepository u, ConferenceRepository c, PaperRepository p, PaperCoAuthorsRepository p1, ReviewerAssignmentRepository r){
         this.userRepository = u;
         this.conferenceRepository = c;
         this.paperRepository = p;
         this.paperCoAuthorsRepository = p1;
+        this.reviewerAssignmentRepository = r;
     }
 
     @GetMapping
@@ -65,7 +69,7 @@ public class UserController {
 
     // Get a single conference's data by id as an author
     @GetMapping
-    @RequestMapping("/conference")
+    @RequestMapping("/author/conference")
     public ResponseEntity<List<GetConferenceResponse>> getConferenceData(@RequestParam Optional<String> conferenceId){
 
         if(conferenceId.isEmpty()){
@@ -237,6 +241,213 @@ public class UserController {
             }
             return ResponseEntity.ok(responsePayload);
         }
+        return null;
+    }
+
+    @GetMapping
+    @RequestMapping("/chair/allreviewers")
+    public ResponseEntity<List<User>> getAllReviewers(){
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if(authentication != null && authentication.isAuthenticated()) {
+
+            List<User> responsePayload = new ArrayList<>();
+            List<User> unprocessedUsers = userRepository.findAllReviewers();
+
+            for(int i = 0; i < unprocessedUsers.size(); i++){
+                User temp = unprocessedUsers.get(i);
+                temp.setPassword("REDACTED");
+                responsePayload.add(temp);
+            }
+
+            return ResponseEntity.ok(responsePayload);
+
+        }
+
+        return null;
+
+    }
+
+    @PostMapping
+    @RequestMapping("/chair/reviewer")
+    public ResponseEntity<String> assignReviewerToPaper(@RequestBody @NonNull Optional<ReviewerAssignment> request){
+
+        if(request.isEmpty()){
+            System.out.println("---- assign reviewer to paper endpoint had not request body! ---- ");
+            return null;
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if(authentication != null && authentication.isAuthenticated()) {
+
+            Optional<User> requester = userRepository.findUserByEmail(authentication.getName());
+
+            if(requester.isEmpty()){
+                System.out.println("--------- requester not found when posing review assignment! ----------");
+                return null;
+            }
+
+            if(!requester.get().getType().contains("Chair")){
+                System.out.println("--------- Only chair can make reviewer assignments! ------------");
+                return null;
+            }
+
+            Optional<User> reviewer = userRepository.findById(request.get().getReviewerId());
+
+            if(reviewer.isEmpty()){
+                System.out.println("------ assigned reviewer not found! --------");
+                return null;
+            }
+
+            if(!reviewer.get().getType().contains("Reviewer")){
+                System.out.println("------ can only assign a reviewer to a reviwer assignment! -----");
+                return null;
+            }
+
+            reviewerAssignmentRepository.save(request.get());
+            return ResponseEntity.ok("Reviewer assignment saved successfully");
+
+        }
+
+        return null;
+
+    }
+
+    @GetMapping
+    @RequestMapping("/chair/paper-reviews")
+    public ResponseEntity<List<ReviewerAssignment>> getReviewsForPaper (@Param("paperId") Long id){
+
+        // TODO fix get paper reviews endpoint
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if(authentication != null && authentication.isAuthenticated()) {
+            List<ReviewerAssignment> reviewerAssignments = reviewerAssignmentRepository.getReviewerAssignmentsByPaperId(id);
+            return ResponseEntity.ok(reviewerAssignments);
+        }
+
+        return null;
+
+    }
+
+    @PostMapping
+    @RequestMapping("/chair/paper-decision")
+    public ResponseEntity<String> setPaperDecision (@RequestBody PaperDecisionRequest request){
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if(authentication != null && authentication.isAuthenticated()) {
+
+            Optional<User> requester = userRepository.findUserByEmail(authentication.getName());
+
+            if(requester.isEmpty()){
+                System.out.println("--------- requester not found when posting paper decision! ----------");
+                return null;
+            }
+
+            if(!requester.get().getType().contains("Chair")){
+                System.out.println("--------- Only chair can make paper decisions! ------------");
+                return null;
+            }
+
+            paperRepository.setPaperDecision(request.getPaperId(), request.getDecision());
+            return ResponseEntity.ok("Paper decision sucessfully posted!");
+
+        }
+
+        return null;
+
+    }
+
+    @GetMapping
+    @RequestMapping("/reviewer/papers")
+    public ResponseEntity<List<Paper>> getAssignedPapers (){
+
+        // TODO : send author and coauthor names with papers!
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if(authentication != null && authentication.isAuthenticated()) {
+
+            Optional<User> requester = userRepository.findUserByEmail(authentication.getName());
+
+            if (requester.isEmpty()) {
+                System.out.println("---- requesting review papers for a non-existent reviewer! -----");
+                return null;
+            }
+
+            if (!requester.get().getType().contains("Reviewer")) {
+                System.out.println("----- must be a reviewer to retrieve assigned papers! ------");
+                return null;
+            }
+
+            List<Paper> assignedPapers = paperRepository.getAssignedPapers(requester.get().getId());
+            return ResponseEntity.ok(assignedPapers);
+
+        }
+
+        return null;
+
+    }
+
+    @GetMapping
+    @RequestMapping("/reviewer/reviews")
+    public ResponseEntity<List<ReviewerAssignment>> getReviewerAssignments (){
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if(authentication != null && authentication.isAuthenticated()) {
+
+            Optional<User> requester = userRepository.findUserByEmail(authentication.getName());
+
+            if(requester.isEmpty()){
+                System.out.println("---- requesting review assignments for a reviewer is empty! -----");
+                return null;
+            }
+
+            if(!requester.get().getType().contains("Reviewer")){
+                System.out.println("----- must be a reviewer to retrieve assigned reviews! ------");
+                return null;
+            }
+
+            List<ReviewerAssignment> assignments = reviewerAssignmentRepository.getReviewerAssignmentsByUserId(requester.get().getId());
+            return ResponseEntity.ok(assignments);
+
+        }
+
+        return null;
+
+    }
+
+    @PostMapping
+    @RequestMapping("/reviewer/review")
+    public ResponseEntity<String> setReviewDecision (@RequestBody ReviewerAssignment request){
+
+        // TODO : Fix reviewer assignment query
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if(authentication != null && authentication.isAuthenticated()) {
+
+            Optional<User> requester = userRepository.findUserByEmail(authentication.getName());
+
+            if(requester.isEmpty()){
+                System.out.println("---- requester is empty! -----");
+                return null;
+            }
+
+            if(!requester.get().getType().contains("Reviewer")){
+                System.out.println("----- must be a reviewer to retrieve assigned reviews! ------");
+                return null;
+            }
+
+            reviewerAssignmentRepository.setReviewerAssignment(request.getPaperId(), request.getReviewerId(), request.getStatus());
+            return ResponseEntity.ok("Successfully set review response!");
+
+        }
+
         return null;
 
     }

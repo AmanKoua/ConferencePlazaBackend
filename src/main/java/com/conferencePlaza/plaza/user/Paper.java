@@ -17,7 +17,6 @@ public class Paper {
             generator ="paper_sequence"
     )
     private long id;
-
     public String paperData;
     public String paperTitle;
     public Long authorId;
