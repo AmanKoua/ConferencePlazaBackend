@@ -363,9 +363,9 @@ public class UserController {
 
     @GetMapping
     @RequestMapping("/reviewer/papers")
-    public ResponseEntity<List<Paper>> getAssignedPapers (){
+    public ResponseEntity<List<GetAssignedPaper>> getAssignedPapers (){
 
-        // TODO : send author and coauthor names with papers!
+        // TODO Test that assigned papers are retieved with all relevant details
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -384,7 +384,51 @@ public class UserController {
             }
 
             List<Paper> assignedPapers = paperRepository.getAssignedPapers(requester.get().getId());
-            return ResponseEntity.ok(assignedPapers);
+            List<GetAssignedPaper> responsePayload = new ArrayList<>();
+
+            for(int i = 0; i < assignedPapers.size(); i++){
+
+                Paper tempPaper = assignedPapers.get(i);
+                Optional<User> tempPaperAuthorOptional = userRepository.findById(tempPaper.getAuthorId());
+
+                if(tempPaperAuthorOptional.isEmpty()){
+                    System.out.println("---- paper author is empty when getting reviewer papers! ----");
+                    continue;
+                }
+
+                User paperAuthor = tempPaperAuthorOptional.get();
+                List<PaperCoAuthors> tempPaperCoAuthors = paperCoAuthorsRepository.findCoAuthorsForSubmission(tempPaper.getId());
+                List<String> tempPaperCoAuthorsNames = new ArrayList<>();
+
+                for(int j = 0; j < tempPaperCoAuthors.size(); j++){
+
+                    Optional<User> tempCoAuthor = userRepository.findById(tempPaperCoAuthors.get(i).getUserId());
+
+                    if(tempCoAuthor.isEmpty()){
+                        System.out.println(" ------ Temp co-author not found when looking for co-authors -----");
+                        continue;
+                    }
+
+                    tempPaperCoAuthorsNames.add(tempCoAuthor.get().getFirstName() + " " + tempCoAuthor.get().getLastName());
+
+                }
+
+                GetAssignedPaper temp = new GetAssignedPaper();
+
+                temp.setPaperId(tempPaper.getId());
+                temp.setPaperData(tempPaper.getPaperData());
+                temp.setPaperTitle(tempPaper.getPaperTitle());
+                temp.setAuthorId(tempPaper.getAuthorId());
+                temp.setAuthorName(paperAuthor.getFirstName() + " " + paperAuthor.getLastName());
+                temp.setCoAuthorNames(tempPaperCoAuthorsNames);
+                temp.setStatus(tempPaper.getStatus());
+                temp.setConferenceId(tempPaper.getConferenceId());
+
+                responsePayload.add(temp);
+
+            }
+
+            return ResponseEntity.ok(responsePayload);
 
         }
 
@@ -394,7 +438,7 @@ public class UserController {
 
     @GetMapping
     @RequestMapping("/reviewer/reviews")
-    public ResponseEntity<List<ReviewerAssignment>> getReviewerAssignments (){
+    public ResponseEntity<List<ReviewerAssignment>> getReviewerAssignments (){ // Get the recommendation the reviewer assigned to an existing paper
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
