@@ -236,7 +236,7 @@ public class UserController {
                     tempPaperCoAuthorsNames.add(tempCoAuthor.get().getFirstName() + " " + tempCoAuthor.get().getLastName());
                 }
 
-                GetConferenceResponse temp = new GetConferenceResponse(conferencePapers.get(i).getPaperTitle(), authorName, tempPaperCoAuthorsNames, conferencePapers.get(i).getStatus());
+                GetConferenceResponse temp = new GetConferenceResponse(conferencePapers.get(i).getId(), conferencePapers.get(i).getPaperTitle(), authorName, tempPaperCoAuthorsNames, conferencePapers.get(i).getStatus());
                 responsePayload.add(temp);
             }
             return ResponseEntity.ok(responsePayload);
@@ -317,14 +317,15 @@ public class UserController {
 
     @GetMapping
     @RequestMapping("/chair/paper-reviews")
-    public ResponseEntity<List<ReviewerAssignment>> getReviewsForPaper (@Param("paperId") Long id){
+    public ResponseEntity<List<ReviewerAssignment>> getReviewsForPaper (@Param("paperId") Long paperId){
 
         // TODO fix get paper reviews endpoint
+        // Check that chair can get all reviewer assignmnet objects for a given paper
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if(authentication != null && authentication.isAuthenticated()) {
-            List<ReviewerAssignment> reviewerAssignments = reviewerAssignmentRepository.getReviewerAssignmentsByPaperId(id);
+            List<ReviewerAssignment> reviewerAssignments = reviewerAssignmentRepository.getReviewerAssignmentsByPaperId(paperId);
             return ResponseEntity.ok(reviewerAssignments);
         }
 
@@ -365,7 +366,7 @@ public class UserController {
     @RequestMapping("/reviewer/papers")
     public ResponseEntity<List<GetAssignedPaper>> getAssignedPapers (){
 
-        // TODO Test that assigned papers are retieved with all relevant details
+        // TODO Test that assigned papers are retieved with all relevant details. Only usernames were incorrect
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -402,7 +403,7 @@ public class UserController {
 
                 for(int j = 0; j < tempPaperCoAuthors.size(); j++){
 
-                    Optional<User> tempCoAuthor = userRepository.findById(tempPaperCoAuthors.get(i).getUserId());
+                    Optional<User> tempCoAuthor = userRepository.findById(tempPaperCoAuthors.get(j).getUserId());
 
                     if(tempCoAuthor.isEmpty()){
                         System.out.println(" ------ Temp co-author not found when looking for co-authors -----");
@@ -469,7 +470,8 @@ public class UserController {
     @RequestMapping("/reviewer/review")
     public ResponseEntity<String> setReviewDecision (@RequestBody ReviewerAssignment request){
 
-        // TODO : Fix reviewer assignment query
+        // TODO : Check whether or not reviewer assignment will be saved
+        // UPDATE : Row will be overridden, but original tutple id must be provided
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -487,7 +489,8 @@ public class UserController {
                 return null;
             }
 
-            reviewerAssignmentRepository.setReviewerAssignment(request.getPaperId(), request.getReviewerId(), request.getStatus());
+//            reviewerAssignmentRepository.setReviewerAssignment(request.getPaperId(), request.getReviewerId(), request.getStatus());
+            reviewerAssignmentRepository.save(request);
             return ResponseEntity.ok("Successfully set review response!");
 
         }

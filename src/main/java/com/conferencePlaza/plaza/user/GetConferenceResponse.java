@@ -7,6 +7,7 @@ import java.util.List;
 public class GetConferenceResponse {
 
 
+    public Long paperId;
     public String title;
     public String author;
     public List<String> coAuthors;
@@ -14,7 +15,8 @@ public class GetConferenceResponse {
     public GetConferenceResponse() {
     }
 
-    public GetConferenceResponse(String title, String author, List<String> coAuthors, String status) {
+    public GetConferenceResponse(Long paperId, String title, String author, List<String> coAuthors, String status) {
+        this.paperId = paperId;
         this.title = title;
         this.author = author;
         this.coAuthors = coAuthors;
@@ -51,5 +53,13 @@ public class GetConferenceResponse {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Long getPaperId() {
+        return paperId;
+    }
+
+    public void setPaperId(Long paperId) {
+        this.paperId = paperId;
     }
 }
