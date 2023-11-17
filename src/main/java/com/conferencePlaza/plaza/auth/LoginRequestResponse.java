@@ -4,8 +4,11 @@ public class LoginRequestResponse {
 
     public String token;
 
-    LoginRequestResponse(String token){
+    public String type;
+
+    LoginRequestResponse(String token, String type){
         this.token = token;
+        this.type = type;
     }
 
     public String getToken() {
@@ -14,5 +17,13 @@ public class LoginRequestResponse {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

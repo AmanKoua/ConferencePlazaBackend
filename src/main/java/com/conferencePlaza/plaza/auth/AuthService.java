@@ -11,7 +11,6 @@ import java.util.Optional;
 
 @Service
 public class AuthService {
-
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -41,7 +40,7 @@ public class AuthService {
 
         var jwtToken = jwtService.generateToken(tempUser.get());
 
-        return new LoginRequestResponse(jwtToken);
+        return new LoginRequestResponse(jwtToken, tempUser.get().getType());
     }
 
 }
