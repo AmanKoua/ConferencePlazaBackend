@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/admin")
 public class AdminController {
@@ -61,7 +63,15 @@ public class AdminController {
             else{
                 request.setPassword(passwordEncoder.encode(request.getPassword()));
                 userRepository.save(request);
-                return ResponseEntity.ok(new PostItemResponse("Chair posted sucessfully!"));
+
+                Optional<User> newChair = userRepository.findUserByEmail(request.getEmail());
+
+                if(newChair.isEmpty()){
+                    System.out.println("chair is empty after being registerd!");
+                    return null;
+                }
+
+                return ResponseEntity.ok(new PostItemResponse("Chair posted sucessfully! -ChairId-" + newChair.get().getId()));
             }
         }
         else{
