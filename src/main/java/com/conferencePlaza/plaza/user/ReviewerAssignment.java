@@ -32,6 +32,12 @@ public class ReviewerAssignment {
         this.status = status;
     }
 
+    public ReviewerAssignment(Long reviewerId, Long paperId, String status) {
+        this.reviewerId = reviewerId;
+        this.paperId = paperId;
+        this.status = status;
+    }
+
     public Long getReviewerId() {
         return reviewerId;
     }

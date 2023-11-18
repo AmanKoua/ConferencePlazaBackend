@@ -272,7 +272,7 @@ public class UserController {
 
     @PostMapping
     @RequestMapping("/chair/reviewer")
-    public ResponseEntity<String> assignReviewerToPaper(@RequestBody @NonNull Optional<ReviewerAssignment> request){
+    public ResponseEntity<PostItemResponse> assignReviewerToPaper(@RequestBody @NonNull Optional<ReviewerAssignment> request){
 
         if(request.isEmpty()){
             System.out.println("---- assign reviewer to paper endpoint had not request body! ---- ");
@@ -308,7 +308,7 @@ public class UserController {
             }
 
             reviewerAssignmentRepository.save(request.get());
-            return ResponseEntity.ok("Reviewer assignment saved successfully");
+            return ResponseEntity.ok(new PostItemResponse("Reviewer assignment saved successfully"));
 
         }
 
@@ -336,7 +336,7 @@ public class UserController {
 
     @PostMapping
     @RequestMapping("/chair/paper-decision")
-    public ResponseEntity<String> setPaperDecision (@RequestBody PaperDecisionRequest request){
+    public ResponseEntity<PostItemResponse> setPaperDecision (@RequestBody PaperDecisionRequest request){
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -355,7 +355,7 @@ public class UserController {
             }
 
             paperRepository.setPaperDecision(request.getPaperId(), request.getDecision());
-            return ResponseEntity.ok("Paper decision sucessfully posted!");
+            return ResponseEntity.ok(new PostItemResponse("Paper decision sucessfully posted!"));
 
         }
 
@@ -469,7 +469,7 @@ public class UserController {
 
     @PostMapping
     @RequestMapping("/reviewer/review")
-    public ResponseEntity<String> setReviewDecision (@RequestBody ReviewerAssignment request){
+    public ResponseEntity<PostItemResponse> setReviewDecision (@RequestBody ReviewerAssignment request){
 
         // TODO : Check whether or not reviewer assignment will be saved
         // UPDATE : Row will be overridden, but original tutple id must be provided
@@ -492,7 +492,7 @@ public class UserController {
 
 //            reviewerAssignmentRepository.setReviewerAssignment(request.getPaperId(), request.getReviewerId(), request.getStatus());
             reviewerAssignmentRepository.save(request);
-            return ResponseEntity.ok("Successfully set review response!");
+            return ResponseEntity.ok(new PostItemResponse("Successfully set review response!"));
 
         }
 
